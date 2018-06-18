@@ -1,0 +1,13 @@
+{
+    "fn_num": 0,
+    "endpoint": "172.17.0.4:9000",
+    "access_key": "JAHX7LAUXB7N6S208HCB",
+    "secret_key": "EuaJ2LZU0bdCztvSrGtUU4uN3DhgzMeXNOO2V2CH",
+    "data_bucket_name": "higgs-data",
+    "data_object_name": "higgs.test-data.csv",
+    "data_file_delimiter": ",",
+    "model_bucket_name": "model",
+    "model_object_name_prefix": "trial-alpha",
+    "output_bucket_name": "output",
+    "output_object_name_prefix": "trial-alpha"
+}
