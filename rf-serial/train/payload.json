@@ -1,18 +1,32 @@
 {
-    "fn_num": 0,
-    "endpoint": "172.17.0.4:9000",
-    "access_key": "JAHX7LAUXB7N6S208HCB",
-    "secret_key": "EuaJ2LZU0bdCztvSrGtUU4uN3DhgzMeXNOO2V2CH",
-    "data_bucket_name": "higgs-data",
-    "data_object_name": "higgs.train-data.csv",
-    "data_file_delimiter": ",",
-    "model_bucket_name": "model",
-    "model_object_name_prefix": "trial-alpha",
-    "params": {
-        "n_estimators": 1,
-        "n_jobs": 1,
-        "max_depth": 10,
-        "min_samples_leaf": 1,
-        "max_features": "sqrt"
-    }
+  "fn_num" : 0,
+  "endpoint" : "172.17.0.4:9000",
+  "access_key" : "JAHX7LAUXB7N6S208HCB",
+  "secret_key" : "EuaJ2LZU0bdCztvSrGtUU4uN3DhgzMeXNOO2V2CH",
+  "secure" : false,
+  "region" : null,
+  "data_bucket_name" : "sonar-data",
+  "data_object_name" : "sonar.train-data.csv",
+  "data_file_delimiter" : ",",
+  "model_bucket_name" : "sonar-model",
+  "model_object_name_prefix" : "trial-beta",
+  "estimator_params" : {
+    "n_estimators" : 800,
+    "criterion" : "gini",
+    "max_depth" : 10,
+    "min_samples_split" : "2",
+    "min_samples_leaf" : "1",
+    "min_weight_fraction_leaf" : 0.0,
+    "max_features" : "sqrt",
+    "max_leaf_nodes" : null,
+    "min_impurity_decrease" : 0.0,
+    "min_impurity_split" : null,
+    "bootstrap" : true,
+    "oob_score" : false,
+    "n_jobs" : 1,
+    "random_state" : null,
+    "verbose" : 0,
+    "warm_start" : false,
+    "class_weight" : null
+  }
 }
