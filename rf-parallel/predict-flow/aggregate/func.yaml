@@ -1,5 +1,5 @@
-name: train
-version: 0.0.38
+name: aggregate
+version: 0.0.27
 runtime: python
 entrypoint: python3 func.py
 memory: 8192

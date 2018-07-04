@@ -39,7 +39,7 @@ def handler(ctx, data=None, loop=None):
 
         # Establishing connection to remote storage
         minio_client = minio_init_client(endpoint, access_key=access_key, secret_key=secret_key,
-                                             secure=secure, region=region)
+                                         secure=secure, region=region)
 
         # Creating directories in function's local storage
         if not os.path.exists('data'):
@@ -69,8 +69,9 @@ def handler(ctx, data=None, loop=None):
         logger.info('Loaded file!')
 
         # Separation of the input training dataset into labels and features
-        train_y = np.array(train_data.iloc[:, 0])
-        train_X = np.array(train_data.drop(train_data.columns[0], axis=1))
+        n_outputs = body.get('n_outputs')
+        train_y = np.array(train_data.iloc[:, 0:n_outputs])
+        train_X = np.array(train_data.drop(train_data.columns[0:n_outputs], axis=1))
 
         # Initialisation of the Random Forest algorithm with the estimator_params
         if estimator_params is not None:

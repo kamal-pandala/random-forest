@@ -1,7 +1,7 @@
-name: train-flow
-version: 0.0.39
+name: predict-flow
+version: 0.0.27
 runtime: java
-cmd: com.example.fn.TrainFlow::handleRequest
+cmd: com.example.fn.PredictFlow::handleRequest
 build_image: fnproject/fn-java-fdk-build:jdk9-1.0.62
 run_image: fnproject/fn-java-fdk:jdk9-1.0.62
 format: http

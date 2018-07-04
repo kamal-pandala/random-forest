@@ -3,13 +3,18 @@ package com.example.fn;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TrainParams {
+public class PredictParams implements Serializable {
     @JsonProperty("fn_num")
     private Integer fnNum;
 
     @JsonProperty("endpoint")
     private String endpoint;
+
+    @JsonProperty("port")
+    private int port = 0;
 
     @JsonProperty("access_key")
     private String accessKey;
@@ -32,17 +37,26 @@ public class TrainParams {
     @JsonProperty("data_file_delimiter")
     private String dataFileDelimiter = ",";
 
-    @JsonProperty("n_outputs")
-    private Integer nOutputs = 1;
-
     @JsonProperty("model_bucket_name")
     private String modelBucketName;
 
     @JsonProperty("model_object_name_prefix")
     private String modelObjectNamePrefix;
 
-    @JsonProperty("estimator_params")
-    private EstimatorParams estimatorParams;
+    @JsonProperty("model_file_start")
+    private Integer modelFileStart;
+
+    @JsonProperty("model_file_count")
+    private Integer modelFileCount;
+
+    @JsonProperty("output_bucket_name")
+    private String outputBucketName;
+
+    @JsonProperty("output_object_name_prefix")
+    private String outputObjectNamePrefix;
+
+    @JsonProperty("output_file_delimiter")
+    private String outputFileDelimiter = ",";
 
     @JsonProperty("fn_num")
     public Integer getFnNum() {
@@ -62,6 +76,16 @@ public class TrainParams {
     @JsonProperty("endpoint")
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
+    }
+
+    @JsonProperty("port")
+    public int getPort() {
+        return port;
+    }
+
+    @JsonProperty("port")
+    public void setPort(int port) {
+        this.port = port;
     }
 
     @JsonProperty("access_key")
@@ -134,16 +158,6 @@ public class TrainParams {
         this.dataFileDelimiter = dataFileDelimiter;
     }
 
-    @JsonProperty("n_outputs")
-    public Integer getnOutputs() {
-        return nOutputs;
-    }
-
-    @JsonProperty("n_outputs")
-    public void setnOutputs(Integer nOutputs) {
-        this.nOutputs = nOutputs;
-    }
-
     @JsonProperty("model_bucket_name")
     public String getModelBucketName() {
         return modelBucketName;
@@ -164,13 +178,53 @@ public class TrainParams {
         this.modelObjectNamePrefix = modelObjectNamePrefix;
     }
 
-    @JsonProperty("estimator_params")
-    public EstimatorParams getEstimatorParams() {
-        return estimatorParams;
+    @JsonProperty("model_file_start")
+    public Integer getModelFileStart() {
+        return modelFileStart;
     }
 
-    @JsonProperty("estimator_params")
-    public void setEstimatorParams(EstimatorParams estimatorParams) {
-        this.estimatorParams = estimatorParams;
+    @JsonProperty("model_file_start")
+    public void setModelFileStart(Integer modelFileStart) {
+        this.modelFileStart = modelFileStart;
+    }
+
+    @JsonProperty("model_file_count")
+    public Integer getModelFileCount() {
+        return modelFileCount;
+    }
+
+    @JsonProperty("model_file_count")
+    public void setModelFileCount(Integer modelFileCount) {
+        this.modelFileCount = modelFileCount;
+    }
+
+    @JsonProperty("output_bucket_name")
+    public String getOutputBucketName() {
+        return outputBucketName;
+    }
+
+    @JsonProperty("output_bucket_name")
+    public void setOutputBucketName(String outputBucketName) {
+        this.outputBucketName = outputBucketName;
+    }
+
+    @JsonProperty("output_object_name_prefix")
+    public String getOutputObjectNamePrefix() {
+        return outputObjectNamePrefix;
+    }
+
+    @JsonProperty("output_object_name_prefix")
+    public void setOutputObjectNamePrefix(String outputObjectNamePrefix) {
+        this.outputObjectNamePrefix = outputObjectNamePrefix;
+    }
+
+    @JsonProperty("output_file_delimiter")
+    public String getOutputFileDelimiter() {
+        return outputFileDelimiter;
+    }
+
+    @JsonProperty("output_file_delimiter")
+    public void setOutputFileDelimiter(String outputFileDelimiter) {
+        this.outputFileDelimiter = outputFileDelimiter;
     }
 }

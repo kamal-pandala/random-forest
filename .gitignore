@@ -4,3 +4,13 @@ rf-parallel/\.idea/
 rf-parallel/train-flow/\.idea/
 
 rf-parallel/train-flow/target/
+
+rf-parallel/train-flow/src/main/java/com/example/fn/ParamsChecker\.java
+
+rf-parallel/predict-flow/\.idea/
+
+rf-parallel/predict-flow/src/main/java/com/example/fn/ParamsChecker\.java
+
+rf-parallel/predict-flow/target/
+
+*.iml
