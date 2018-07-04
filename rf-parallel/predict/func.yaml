@@ -1,7 +1,0 @@
-name: predict
-version: 0.0.14
-runtime: python
-entrypoint: python3 func.py
-memory: 8192
-format: json
-timeout: 120
