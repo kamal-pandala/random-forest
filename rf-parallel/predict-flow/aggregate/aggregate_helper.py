@@ -1,5 +1,6 @@
 import sys
 import logging
+import numpy as np
 from minio import Minio
 from minio.error import ResponseError
 
@@ -27,9 +28,9 @@ def minio_put_object(client, bucketname, objectname, filepath, logger):
 def minio_get_all_objects(client, bucketname, prefixname, local_file_prefix, logger):
     try:
         objects = client.list_objects_v2(bucketname, prefix=prefixname, recursive=True)
-        for object in objects:
-            minio_get_object(client, bucketname, prefixname + '/' + object.object_name.encode('utf-8'),
-                             local_file_prefix + '/' + object.object_name.encode('utf-8'), logger)
+        for obj in objects:
+            minio_get_object(client, bucketname, obj.object_name,
+                             local_file_prefix + '/' + obj.object_name.split('/')[1], logger)
     except ResponseError as err:
         logger.info(err)
 
@@ -54,3 +55,8 @@ def get_logger(ctx):
 def combine_predictions(prediction_a, prediction_b):
     prediction_a += prediction_b
     return prediction_a
+
+
+def concatenate_multioutput_predictions(predictions_a, predictions_b):
+    predictions_a = np.concatenate((predictions_a, predictions_b), axis=1)
+    return predictions_a
