@@ -1,5 +1,6 @@
 package com.example.fn;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.HashMap;
 
@@ -7,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class EstimatorParams {
+public class EstimatorParams implements Serializable {
     @JsonProperty("n_estimators")
     private Integer nEstimators = 10;
 

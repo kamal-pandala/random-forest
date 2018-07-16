@@ -28,19 +28,22 @@ def handler(ctx, data=None, loop=None):
         # Parameters for the input testing dataset
         data_bucket_name = body.get('data_bucket_name')
         data_object_name = body.get('data_object_name')
+        data_object_prefix_name = body.get('data_object_prefix_name')
+        if data_object_prefix_name is not None:
+            data_object_name = data_object_prefix_name + '/' + data_object_name
         data_file_delimiter = body.get('data_file_delimiter')
 
         # Parameters for the input model file
         fn_num = body.get('fn_num')
-        model_bucket_name = body.get('model_bucket_name')
-        model_object_name_prefix = body.get('model_object_name_prefix')
-        model_object_name_prefix += '/model_'
+        model_object_bucket_name = body.get('model_object_bucket_name')
+        model_object_prefix_name = body.get('model_object_prefix_name')
+        model_object_prefix_name += '/model_'
         model_file_start_index = body.get('model_file_start')
         model_file_count = body.get('model_file_count')
 
         # Parameters for the output prediction file
         output_bucket_name = body.get('output_bucket_name')
-        output_object_name_prefix = body.get('output_object_name_prefix')
+        output_object_prefix_name = body.get('output_object_prefix_name')
         output_file_delimiter = body.get("output_file_delimiter")
 
         # Establishing connection to remote storage
@@ -61,24 +64,20 @@ def handler(ctx, data=None, loop=None):
 
         if not os.path.exists('model'):
             os.mkdir('model')
-            for i in range(model_file_start_index, model_file_start_index + model_file_count):
-                model_object_name = model_object_name_prefix + str(i) + '.pkl'
-                minio_get_object(minio_client, model_bucket_name, model_object_name,
-                                 'model/model_' + str(i) + '.pkl', logger)
-            logger.info('Downloaded model!')
         else:
             for the_file in os.listdir('model'):
                 file_path = os.path.join('model', the_file)
                 try:
                     if os.path.isfile(file_path):
                         os.unlink(file_path)
-                    for i in range(model_file_start_index, model_file_start_index + model_file_count):
-                        model_object_name = model_object_name_prefix + str(i) + '.pkl'
-                        minio_get_object(minio_client, model_bucket_name, model_object_name,
-                                         'model/model_' + str(i) + '.pkl', logger)
-                    logger.info('Downloaded model!')
                 except Exception as e:
                     logger.info('Unable to delete files in the model directory!')
+
+        for i in range(model_file_start_index, model_file_start_index + model_file_count):
+            model_object_name = model_object_prefix_name + str(i) + '.pkl'
+            minio_get_object(minio_client, model_object_bucket_name, model_object_name,
+                             'model/model_' + str(i) + '.pkl', logger)
+        logger.info('Downloaded model!')
 
         if not os.path.exists('output'):
             os.mkdir('output')
@@ -115,7 +114,7 @@ def handler(ctx, data=None, loop=None):
             logger.info('Finished predictions!')
 
             # Uploading the predictions into remote storage
-            output_object_name = output_object_name_prefix + '/predictions_' + str(fn_num) + '.csv'
+            output_object_name = output_object_prefix_name + '/predictions_' + str(fn_num) + '.csv'
             minio_put_object(minio_client, output_bucket_name,  output_object_name, 'output/predictions.csv', logger)
             logger.info('Uploaded file to bucket: {0} with object name: {1}!'.format(output_bucket_name, output_object_name))
         else:
@@ -126,7 +125,7 @@ def handler(ctx, data=None, loop=None):
                 logger.info('Finished predictions!')
 
                 # Uploading the predictions into remote storage
-                output_object_name = output_object_name_prefix + '/output_' + str(i) + '/predictions_' + str(fn_num) + '.csv'
+                output_object_name = output_object_prefix_name + '/output_' + str(i) + '/predictions_' + str(fn_num) + '.csv'
                 minio_put_object(minio_client, output_bucket_name, output_object_name, local_file_path, logger)
                 logger.info('Uploaded file to bucket: {0} with object name: {1}!'.format(output_bucket_name,
                                                                                          output_object_name))

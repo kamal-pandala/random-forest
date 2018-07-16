@@ -6,7 +6,7 @@
     "data_bucket_name": "sonar-data",
     "data_object_name": "sonar.train-data.csv",
     "data_file_delimiter": ",",
-    "model_bucket_name": "sonar-model",
+    "model_object_bucket_name": "sonar-model",
     "estimator_params": {
         "n_estimators": 1024,
         "max_depth": 10,

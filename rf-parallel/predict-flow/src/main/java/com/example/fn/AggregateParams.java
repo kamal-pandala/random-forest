@@ -28,8 +28,8 @@ public class AggregateParams implements Serializable {
     @JsonProperty("output_bucket_name")
     private String outputBucketName;
 
-    @JsonProperty("output_object_name_prefix")
-    private String outputObjectNamePrefix;
+    @JsonProperty("output_object_prefix_name")
+    private String outputObjectPrefixName;
 
     @JsonProperty("output_file_delimiter")
     private String outputFileDelimiter = ",";
@@ -110,14 +110,14 @@ public class AggregateParams implements Serializable {
         this.outputBucketName = outputBucketName;
     }
 
-    @JsonProperty("output_object_name_prefix")
-    public String getOutputObjectNamePrefix() {
-        return outputObjectNamePrefix;
+    @JsonProperty("output_object_prefix_name")
+    public String getOutputObjectPrefixName() {
+        return outputObjectPrefixName;
     }
 
-    @JsonProperty("output_object_name_prefix")
-    public void setOutputObjectNamePrefix(String outputObjectNamePrefix) {
-        this.outputObjectNamePrefix = outputObjectNamePrefix;
+    @JsonProperty("output_object_prefix_name")
+    public void setOutputObjectPrefixName(String outputObjectPrefixName) {
+        this.outputObjectPrefixName = outputObjectPrefixName;
     }
 
     @JsonProperty("output_file_delimiter")

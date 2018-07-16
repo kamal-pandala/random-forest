@@ -1,5 +1,5 @@
 name: predict
-version: 0.0.43
+version: 0.0.65
 runtime: python
 entrypoint: python3 func.py
 memory: 8192

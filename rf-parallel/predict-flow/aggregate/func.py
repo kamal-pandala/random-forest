@@ -12,7 +12,6 @@ def handler(ctx, data=None, loop=None):
     if data and len(data) > 0:
         logger = get_logger(ctx)
         body = json.loads(data)
-        logger.info(body)
 
         # TODO - validation and exception handling
         # Parameters required for initialising minio client
@@ -26,9 +25,9 @@ def handler(ctx, data=None, loop=None):
         secure = body.get('secure')
         region = body.get('region')
 
-        # Parameters for the output prediction file
+        # Parameters for the output prediction file.
         output_bucket_name = body.get('output_bucket_name')
-        output_object_name_prefix = body.get('output_object_name_prefix')
+        output_object_prefix_name = body.get('output_object_prefix_name')
         output_file_delimiter = body.get("output_file_delimiter")
 
         # Parameters of the problem
@@ -51,10 +50,11 @@ def handler(ctx, data=None, loop=None):
         # Establishing connection to remote storage
         minio_client = minio_init_client(endpoint, access_key=access_key, secret_key=secret_key,
                                          secure=secure, region=region)
-
+        logger.info('Downloaded the prediction files!')
         if n_outputs == 1:
-            minio_get_all_objects(minio_client, output_bucket_name, output_object_name_prefix,
+            minio_get_all_objects(minio_client, output_bucket_name, output_object_prefix_name,
                                   'output', logger)
+
             if os.path.isfile('output/final_predictions.csv'):
                 os.unlink('output/final_predictions.csv')
 
@@ -66,19 +66,22 @@ def handler(ctx, data=None, loop=None):
                         predictions.append(np.array(pd.read_csv(file_path, sep=output_file_delimiter, header=None)))
                 except Exception as e:
                     logger.info('Unable to read files in the output directory!')
+            logger.info('Loaded the prediction files!')
 
             combined_prediction = reduce(combine_predictions, predictions)
             combined_prediction /= n_estimators
+            logger.info('Combined the predictions!')
 
             final_prediction = np.argmax(combined_prediction, axis=1)
             np.savetxt('output/final_predictions.csv', final_prediction, delimiter=output_file_delimiter)
-            minio_put_object(minio_client, output_bucket_name, output_object_name_prefix + '/final_predictions.csv',
+            minio_put_object(minio_client, output_bucket_name, output_object_prefix_name + '/final_predictions.csv',
                              'output/final_predictions.csv', logger)
+            logger.info('Uploaded the final prediction file!')
         else:
             multioutput_predictions = []
             for i in range(n_outputs):
                 os.mkdir('output/output_' + str(i))
-                minio_get_all_objects(minio_client, output_bucket_name, output_object_name_prefix + '/output_' + str(i),
+                minio_get_all_objects(minio_client, output_bucket_name, output_object_prefix_name + '/output_' + str(i),
                                       'output/output_' + str(i), logger)
 
                 predictions = []
@@ -98,7 +101,7 @@ def handler(ctx, data=None, loop=None):
 
             final_predictions = reduce(concatenate_multioutput_predictions, multioutput_predictions)
             np.savetxt('output/final_predictions.csv', final_predictions, delimiter=output_file_delimiter)
-            minio_put_object(minio_client, output_bucket_name, output_object_name_prefix + '/final_predictions.csv',
+            minio_put_object(minio_client, output_bucket_name, output_object_prefix_name + '/final_predictions.csv',
                              'output/final_predictions.csv', logger)
 
         return {"message": "Completed successfully!!!"}

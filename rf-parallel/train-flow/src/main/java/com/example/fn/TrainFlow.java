@@ -20,11 +20,11 @@ public class TrainFlow {
     private static final int FUNCTION_LIMIT = 32;
     private static final int N_CORES_PER_FUNCTION = 1;
 
-    public void handleRequest(TrainParams trainParams) {
+    public String handleRequest(TrainParams trainParams) {
 
         // Setting unique prefix for uploading model files
-        String modelObjectNamePrefix = UUID.randomUUID().toString();
-        trainParams.setModelObjectNamePrefix(modelObjectNamePrefix);
+        String modelObjectPrefixName = UUID.randomUUID().toString();
+        trainParams.setModelObjectPrefixName(modelObjectPrefixName);
 
         // Configuring no. of required functions and trees per function
         int nTreesRequired = trainParams.getEstimatorParams().getnEstimators();
@@ -39,6 +39,8 @@ public class TrainFlow {
 
         // Setting no. of cores per function
         trainParams.getEstimatorParams().setnJobs(N_CORES_PER_FUNCTION);
+
+        //TrainResponse trainResponse = new TrainResponse();
 
         // Creating clones of input params with fn_num as ID
         ArrayList<FlowFuture<HttpResponse>> trainParamsList = new ArrayList<>();
@@ -55,14 +57,24 @@ public class TrainFlow {
                     trainParams));
         }
 
+
         currentFlow().allOf(trainParamsList.toArray(new FlowFuture[nFunctionsRequired]))
                 .whenComplete((v, throwable) -> {
                     if (throwable != null) {
                         log.error("Failed!");
+
+                        //trainResponse.setTrainSucess(false);
                     } else {
                         log.info("Success!");
+
+                        //trainResponse.setTrainSucess(true);
+                        //trainResponse.setModelObjectBucketName(trainParams.getModelObjectBucketName());
+                        //trainResponse.setModelObjectPrefixName(modelObjectPrefixName);
+                        //trainResponse.setModelObjectName();
                     }
-                });
+                }).get();
+
+        return modelObjectPrefixName;
     }
 
 }

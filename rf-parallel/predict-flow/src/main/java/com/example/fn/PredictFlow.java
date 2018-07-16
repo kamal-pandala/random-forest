@@ -12,7 +12,7 @@ import io.minio.MinioClient;
 import io.minio.Result;
 import io.minio.errors.MinioException;
 import io.minio.messages.Item;
-import org.apache.http.client.methods.HttpOptions;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,17 +54,17 @@ public class PredictFlow {
         return modelFileCount;
     }
 
-    public void handleRequest(PredictParams predictParams) {
+    public String handleRequest(PredictParams predictParams) {
 
         // Setting unique prefix for uploading output files
-        String outputObjectNamePrefix = UUID.randomUUID().toString();
-        predictParams.setOutputObjectNamePrefix(outputObjectNamePrefix);
+        String outputObjectPrefixName = UUID.randomUUID().toString();
+        predictParams.setOutputObjectPrefixName(outputObjectPrefixName);
 
         MinioClient minioClient = getMinioClient(predictParams.getEndpoint(), predictParams.getPort(),
                 predictParams.getAccessKey(), predictParams.getSecretKey(),
                 predictParams.getRegion(), predictParams.getSecure());
-        Integer modelFileCount = getModelFileCount(minioClient, predictParams.getModelBucketName(),
-                predictParams.getModelObjectNamePrefix());
+        Integer modelFileCount = getModelFileCount(minioClient, predictParams.getModelObjectBucketName(),
+                predictParams.getModelObjectPrefixName());
 
         // Configuring no. of required functions and predictions per function
         int nPredictionsPerFunction = 1;
@@ -95,11 +95,45 @@ public class PredictFlow {
                     predictParams));
         }
 
-        currentFlow().allOf(predictParamsList.toArray(new FlowFuture[nFunctionsRequired]))
-                .whenComplete((v, throwable) -> {
-                    if (throwable != null) {
-                        log.error("Failed!");
-                    } else {
+//        currentFlow().allOf(predictParamsList.toArray(new FlowFuture[nFunctionsRequired]))
+//                .whenComplete((v, throwable) -> {
+//                    if (throwable != null) {
+//                        log.error("Failed!");
+//                    } else {
+//                        log.info("Success!");
+//
+//                        int n_estimators = 0;
+//                        int n_outputs = 0;
+//                        for (FlowFuture<HttpResponse> future : predictParamsList) {
+//                            String predictionResponse = new String(future.get().getBodyAsBytes());
+//                            predictionResponse = predictionResponse.substring(1, predictionResponse.length() - 1);
+//                            String[] predictionAttrs = predictionResponse.split(",");
+//                            if (n_outputs < 1) {
+//                                n_outputs = Integer.parseInt(predictionAttrs[0]);
+//                            }
+//                            n_estimators += Integer.parseInt(predictionAttrs[1]);
+//                        }
+//
+//                        AggregateParams aggregateParams = new AggregateParams();
+//                        aggregateParams.setEndpoint(predictParams.getEndpoint());
+//                        aggregateParams.setPort(predictParams.getPort());
+//                        aggregateParams.setAccessKey(predictParams.getAccessKey());
+//                        aggregateParams.setSecretKey(predictParams.getSecretKey());
+//                        aggregateParams.setSecure(predictParams.getSecure());
+//                        aggregateParams.setRegion(predictParams.getRegion());
+//                        aggregateParams.setOutputBucketName(predictParams.getOutputBucketName());
+//                        aggregateParams.setOutputObjectPrefixName(outputObjectPrefixName);
+//                        aggregateParams.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
+//                        aggregateParams.setnEstimators(n_estimators);
+//                        aggregateParams.setnOutputs(n_outputs);
+//
+//                        currentFlow().invokeFunction("rf-parallel/predict-flow/aggregate",
+//                                aggregateParams);
+//                    }
+//                });
+
+        FlowFuture<HttpResponse> aggregateFlow = currentFlow().allOf(predictParamsList.toArray(new FlowFuture[nFunctionsRequired]))
+                .thenCompose((v) -> {
                         log.info("Success!");
 
                         int n_estimators = 0;
@@ -122,16 +156,16 @@ public class PredictFlow {
                         aggregateParams.setSecure(predictParams.getSecure());
                         aggregateParams.setRegion(predictParams.getRegion());
                         aggregateParams.setOutputBucketName(predictParams.getOutputBucketName());
-                        aggregateParams.setOutputObjectNamePrefix(outputObjectNamePrefix);
+                        aggregateParams.setOutputObjectPrefixName(outputObjectPrefixName);
                         aggregateParams.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
                         aggregateParams.setnEstimators(n_estimators);
                         aggregateParams.setnOutputs(n_outputs);
 
-                        currentFlow().invokeFunction("rf-parallel/predict-flow/aggregate",
-                                aggregateParams);
-                    }
+                        return currentFlow().invokeFunction("rf-parallel/predict-flow/aggregate",
+                            aggregateParams);
                 });
 
+        return new String(aggregateFlow.get().getBodyAsBytes());
     }
 
 }

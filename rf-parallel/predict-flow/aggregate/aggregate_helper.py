@@ -32,7 +32,7 @@ def minio_get_all_objects(client, bucketname, prefixname, local_file_prefix, log
             minio_get_object(client, bucketname, obj.object_name,
                              local_file_prefix + '/' + obj.object_name.split('/')[1], logger)
     except ResponseError as err:
-        logger.info(err)
+        logger.info(err);
 
 
 def get_logger(ctx):
