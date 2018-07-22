@@ -54,12 +54,13 @@ public class PredictFlow {
         return modelFileCount;
     }
 
-    public String handleRequest(PredictParams predictParams) {
+    public PredictResponse handleRequest(PredictParams predictParams) {
 
         // Setting unique prefix for uploading output files
         String outputObjectPrefixName = UUID.randomUUID().toString();
         predictParams.setOutputObjectPrefixName(outputObjectPrefixName);
 
+        // Obtain the number of model files in the remote storage
         MinioClient minioClient = getMinioClient(predictParams.getEndpoint(), predictParams.getPort(),
                 predictParams.getAccessKey(), predictParams.getSecretKey(),
                 predictParams.getRegion(), predictParams.getSecure());
@@ -76,7 +77,7 @@ public class PredictFlow {
             nRemainderPredictions = nFunctionsRequired % FUNCTION_LIMIT;
         }
 
-        // Creating clones of input params with fn_num as ID
+        // Invoking training jobs and storing references to their futures
         ArrayList<FlowFuture<HttpResponse>> predictParamsList = new ArrayList<>();
         int currentIndex = 0;
         for(int i = 0; i < nFunctionsRequired; i++) {
@@ -91,81 +92,58 @@ public class PredictFlow {
                 predictParams.setModelFileCount(nPredictionsPerFunction);
                 currentIndex += nPredictionsPerFunction;
             }
+
             predictParamsList.add(currentFlow().invokeFunction("rf-parallel/predict-flow/predict",
                     predictParams));
         }
 
-//        currentFlow().allOf(predictParamsList.toArray(new FlowFuture[nFunctionsRequired]))
-//                .whenComplete((v, throwable) -> {
-//                    if (throwable != null) {
-//                        log.error("Failed!");
-//                    } else {
-//                        log.info("Success!");
-//
-//                        int n_estimators = 0;
-//                        int n_outputs = 0;
-//                        for (FlowFuture<HttpResponse> future : predictParamsList) {
-//                            String predictionResponse = new String(future.get().getBodyAsBytes());
-//                            predictionResponse = predictionResponse.substring(1, predictionResponse.length() - 1);
-//                            String[] predictionAttrs = predictionResponse.split(",");
-//                            if (n_outputs < 1) {
-//                                n_outputs = Integer.parseInt(predictionAttrs[0]);
-//                            }
-//                            n_estimators += Integer.parseInt(predictionAttrs[1]);
-//                        }
-//
-//                        AggregateParams aggregateParams = new AggregateParams();
-//                        aggregateParams.setEndpoint(predictParams.getEndpoint());
-//                        aggregateParams.setPort(predictParams.getPort());
-//                        aggregateParams.setAccessKey(predictParams.getAccessKey());
-//                        aggregateParams.setSecretKey(predictParams.getSecretKey());
-//                        aggregateParams.setSecure(predictParams.getSecure());
-//                        aggregateParams.setRegion(predictParams.getRegion());
-//                        aggregateParams.setOutputBucketName(predictParams.getOutputBucketName());
-//                        aggregateParams.setOutputObjectPrefixName(outputObjectPrefixName);
-//                        aggregateParams.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
-//                        aggregateParams.setnEstimators(n_estimators);
-//                        aggregateParams.setnOutputs(n_outputs);
-//
-//                        currentFlow().invokeFunction("rf-parallel/predict-flow/aggregate",
-//                                aggregateParams);
-//                    }
-//                });
-
         FlowFuture<HttpResponse> aggregateFlow = currentFlow().allOf(predictParamsList.toArray(new FlowFuture[nFunctionsRequired]))
                 .thenCompose((v) -> {
-                        log.info("Success!");
+                    //TODO - Failure logic
 
-                        int n_estimators = 0;
-                        int n_outputs = 0;
-                        for (FlowFuture<HttpResponse> future : predictParamsList) {
-                            String predictionResponse = new String(future.get().getBodyAsBytes());
-                            predictionResponse = predictionResponse.substring(1, predictionResponse.length() - 1);
-                            String[] predictionAttrs = predictionResponse.split(",");
-                            if (n_outputs < 1) {
-                                n_outputs = Integer.parseInt(predictionAttrs[0]);
-                            }
-                            n_estimators += Integer.parseInt(predictionAttrs[1]);
+                    int n_estimators = 0;
+                    int n_outputs = 0;
+                    for (FlowFuture<HttpResponse> future : predictParamsList) {
+                        String predictionResponse = new String(future.get().getBodyAsBytes());
+                        predictionResponse = predictionResponse.substring(1, predictionResponse.length() - 1);
+                        String[] predictionAttrs = predictionResponse.split(",");
+                        if (n_outputs < 1) {
+                            n_outputs = Integer.parseInt(predictionAttrs[0]);
                         }
+                        n_estimators += Integer.parseInt(predictionAttrs[1]);
+                    }
 
-                        AggregateParams aggregateParams = new AggregateParams();
-                        aggregateParams.setEndpoint(predictParams.getEndpoint());
-                        aggregateParams.setPort(predictParams.getPort());
-                        aggregateParams.setAccessKey(predictParams.getAccessKey());
-                        aggregateParams.setSecretKey(predictParams.getSecretKey());
-                        aggregateParams.setSecure(predictParams.getSecure());
-                        aggregateParams.setRegion(predictParams.getRegion());
-                        aggregateParams.setOutputBucketName(predictParams.getOutputBucketName());
-                        aggregateParams.setOutputObjectPrefixName(outputObjectPrefixName);
-                        aggregateParams.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
-                        aggregateParams.setnEstimators(n_estimators);
-                        aggregateParams.setnOutputs(n_outputs);
+                    AggregateParams aggregateParams = new AggregateParams();
+                    aggregateParams.setEndpoint(predictParams.getEndpoint());
+                    aggregateParams.setPort(predictParams.getPort());
+                    aggregateParams.setAccessKey(predictParams.getAccessKey());
+                    aggregateParams.setSecretKey(predictParams.getSecretKey());
+                    aggregateParams.setSecure(predictParams.getSecure());
+                    aggregateParams.setRegion(predictParams.getRegion());
+                    aggregateParams.setOutputBucketName(predictParams.getOutputBucketName());
+                    aggregateParams.setOutputObjectPrefixName(outputObjectPrefixName);
+                    aggregateParams.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
+                    aggregateParams.setnEstimators(n_estimators);
+                    aggregateParams.setnOutputs(n_outputs);
 
-                        return currentFlow().invokeFunction("rf-parallel/predict-flow/aggregate",
-                            aggregateParams);
+                    return currentFlow().invokeFunction("rf-parallel/predict-flow/aggregate",
+                        aggregateParams);
                 });
 
-        return new String(aggregateFlow.get().getBodyAsBytes());
+        FlowFuture<PredictResponse> predictFuture = aggregateFlow.thenCompose((v) -> {
+            // TODO - Failure logic
+
+            PredictResponse predictResponse = new PredictResponse();
+            predictResponse.setPredictSucess(true);
+            predictResponse.setOutputBucketName(predictParams.getOutputBucketName());
+            predictResponse.setOutputObjectPrefixName(outputObjectPrefixName);
+            predictResponse.setOutputObjectName("final_predictions.csv");
+            predictResponse.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
+
+            return currentFlow().completedValue(predictResponse);
+        });
+
+        return predictFuture.get();
     }
 
 }

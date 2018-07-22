@@ -51,17 +51,18 @@ def handler(ctx, data=None, loop=None):
                                          secure=secure, region=region)
 
         # Creating directories in function's local storage
+        # Downloading input prediction dataset from remote storage
         if not os.path.exists('data'):
             os.mkdir('data')
-            # Downloading input training dataset from remote storage
             minio_get_object(minio_client, data_bucket_name, data_object_name, 'data/test_data.csv', logger)
             logger.info('Downloaded file!')
         else:
-            # Downloading input training dataset from remote storage
             if not os.path.exists('data/test_data.csv'):
                 minio_get_object(minio_client, data_bucket_name, data_object_name, 'data/test_data.csv', logger)
                 logger.info('Downloaded file!')
 
+        # TODO - Delete folders as well
+        # Cleaning up any existing model files and directories
         if not os.path.exists('model'):
             os.mkdir('model')
         else:
@@ -73,12 +74,14 @@ def handler(ctx, data=None, loop=None):
                 except Exception as e:
                     logger.info('Unable to delete files in the model directory!')
 
+        # Downloading the fitted model files
         for i in range(model_file_start_index, model_file_start_index + model_file_count):
             model_object_name = model_object_prefix_name + str(i) + '.pkl'
             minio_get_object(minio_client, model_object_bucket_name, model_object_name,
                              'model/model_' + str(i) + '.pkl', logger)
-        logger.info('Downloaded model!')
+        logger.info('Downloaded models!')
 
+        # Cleaning up any existing output files and directories
         if not os.path.exists('output'):
             os.mkdir('output')
         else:
@@ -90,12 +93,12 @@ def handler(ctx, data=None, loop=None):
                 except Exception as e:
                     logger.info('Unable to delete files in the output directory!')
 
-        # Loading the input testing dataset into memory
+        # Loading the input prediction dataset into memory
         test_data = pd.read_csv('data/test_data.csv', sep=data_file_delimiter, header=None)
         test_X = np.array(test_data)
         logger.info('Loaded data!')
 
-        # Loading the input model into memory
+        # Loading the input model files into memory
         rf_list = []
         for the_file in os.listdir('model'):
             file_path = os.path.join('model', the_file)
@@ -103,20 +106,23 @@ def handler(ctx, data=None, loop=None):
             rf_list.append(rf_item)
         logger.info('Loaded model!')
 
+        # Combining the models in memory into one model for prediction
         rf = reduce(combine_rfs, rf_list)
 
-        # Predicting using the model for test data and persisting into local storage
+        # Predicting probabilities using the combined model for prediction data
         predictions = rf.predict_proba(test_X)
 
+        # Processing and persisting based on number of outputs in the job
         if rf.n_outputs_ == 1:
             predictions *= rf.n_estimators
             np.savetxt('output/predictions.csv', predictions, delimiter=output_file_delimiter)
             logger.info('Finished predictions!')
 
-            # Uploading the predictions into remote storage
+            # Uploading the prediction file into remote storage
             output_object_name = output_object_prefix_name + '/predictions_' + str(fn_num) + '.csv'
-            minio_put_object(minio_client, output_bucket_name,  output_object_name, 'output/predictions.csv', logger)
-            logger.info('Uploaded file to bucket: {0} with object name: {1}!'.format(output_bucket_name, output_object_name))
+            minio_put_object(minio_client, output_bucket_name, output_object_name, 'output/predictions.csv', logger)
+            logger.info('Uploaded file to bucket: {0} with object name: {1}!'
+                        .format(output_bucket_name, output_object_name))
         else:
             for i, prediction in enumerate(predictions):
                 prediction *= rf.n_estimators
@@ -124,11 +130,13 @@ def handler(ctx, data=None, loop=None):
                 np.savetxt(local_file_path, prediction, delimiter=output_file_delimiter)
                 logger.info('Finished predictions!')
 
-                # Uploading the predictions into remote storage
-                output_object_name = output_object_prefix_name + '/output_' + str(i) + '/predictions_' + str(fn_num) + '.csv'
+                # Uploading the multiple prediction files into remote storage
+                output_object_name = output_object_prefix_name + '/output_' + str(i) + '/predictions_' \
+                                     + str(fn_num) + '.csv'
                 minio_put_object(minio_client, output_bucket_name, output_object_name, local_file_path, logger)
-                logger.info('Uploaded file to bucket: {0} with object name: {1}!'.format(output_bucket_name,
-                                                                                         output_object_name))
+                logger.info('Uploaded file to bucket: {0} with object name: {1}!'
+                            .format(output_bucket_name, output_object_name))
+
         return rf.n_outputs_, rf.n_estimators
     else:
         return {"message": "Data not sent!"}

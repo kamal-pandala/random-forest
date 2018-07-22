@@ -20,13 +20,13 @@ public class TrainFlow {
     private static final int FUNCTION_LIMIT = 32;
     private static final int N_CORES_PER_FUNCTION = 1;
 
-    public String handleRequest(TrainParams trainParams) {
+    public TrainResponse handleRequest(TrainParams trainParams) {
 
         // Setting unique prefix for uploading model files
         String modelObjectPrefixName = UUID.randomUUID().toString();
         trainParams.setModelObjectPrefixName(modelObjectPrefixName);
 
-        // Configuring no. of required functions and trees per function
+        // Configuring number of required functions and trees per function
         int nTreesRequired = trainParams.getEstimatorParams().getnEstimators();
         int nTreesPerFunction = 1;
         int nFunctionsRequired = nTreesRequired;
@@ -40,9 +40,7 @@ public class TrainFlow {
         // Setting no. of cores per function
         trainParams.getEstimatorParams().setnJobs(N_CORES_PER_FUNCTION);
 
-        //TrainResponse trainResponse = new TrainResponse();
-
-        // Creating clones of input params with fn_num as ID
+        // Invoking training jobs and storing references to their futures
         ArrayList<FlowFuture<HttpResponse>> trainParamsList = new ArrayList<>();
         for(int i = 0; i < nFunctionsRequired; i++) {
             trainParams.setFnNum(i);
@@ -57,24 +55,19 @@ public class TrainFlow {
                     trainParams));
         }
 
+        FlowFuture<TrainResponse> trainFuture = currentFlow().allOf(trainParamsList.toArray(new FlowFuture[nFunctionsRequired]))
+                .thenCompose((v) -> {
+                    //TODO - Failure logic
 
-        currentFlow().allOf(trainParamsList.toArray(new FlowFuture[nFunctionsRequired]))
-                .whenComplete((v, throwable) -> {
-                    if (throwable != null) {
-                        log.error("Failed!");
+                    TrainResponse trainResponse = new TrainResponse();
+                    trainResponse.setTrainSucess(true);
+                    trainResponse.setModelObjectBucketName(trainParams.getModelObjectBucketName());
+                    trainResponse.setModelObjectPrefixName(modelObjectPrefixName);
 
-                        //trainResponse.setTrainSucess(false);
-                    } else {
-                        log.info("Success!");
+                    return currentFlow().completedValue(trainResponse);
+                });
 
-                        //trainResponse.setTrainSucess(true);
-                        //trainResponse.setModelObjectBucketName(trainParams.getModelObjectBucketName());
-                        //trainResponse.setModelObjectPrefixName(modelObjectPrefixName);
-                        //trainResponse.setModelObjectName();
-                    }
-                }).get();
-
-        return modelObjectPrefixName;
+        return trainFuture.get();
     }
 
 }
