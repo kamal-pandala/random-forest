@@ -13,6 +13,9 @@ def handler(ctx, data=None, loop=None):
         logger = get_logger(ctx)
         body = json.loads(data)
 
+        fn_num = body.get('fn_num')
+        logger.info('Function {0} has started running!'.format(fn_num))
+
         # TODO - validation and exception handling
         # Parameters required for initialising minio client
         endpoint = body.get('endpoint')
@@ -34,7 +37,6 @@ def handler(ctx, data=None, loop=None):
         data_file_delimiter = body.get('data_file_delimiter')
 
         # Parameters for the output model file
-        fn_num = body.get('fn_num')
         model_object_bucket_name = body.get('model_object_bucket_name')
         model_object_prefix_name = body.get('model_object_prefix_name')
         model_object_name = model_object_prefix_name + '/model_' + str(fn_num) + '.pkl'
@@ -50,23 +52,26 @@ def handler(ctx, data=None, loop=None):
 
         # Creating directories in function's local  storage
         # Downloading input training dataset from remote storage
-        if not os.path.exists('data'):
-            os.mkdir('data')
-            minio_get_object(minio_client, data_bucket_name, data_object_name, 'data/train_data.csv', logger)
-            logger.info('Downloaded file!')
+        if not os.path.exists('/tmp'):
+            os.mkdir('/tmp')
+
+        if not os.path.exists('/tmp/data'):
+            os.mkdir('/tmp/data')
+            minio_get_object(minio_client, data_bucket_name, data_object_name, '/tmp/data/train_data.csv', logger)
+            logger.info('Downloaded the input training data file!')
         else:
 
-            if not os.path.exists('data/train_data.csv'):
-                minio_get_object(minio_client, data_bucket_name, data_object_name, 'data/train_data.csv', logger)
-                logger.info('Downloaded file!')
+            if not os.path.exists('/tmp/data/train_data.csv'):
+                minio_get_object(minio_client, data_bucket_name, data_object_name, '/tmp/data/train_data.csv', logger)
+                logger.info('Downloaded the input training data file!')
 
         # TODO - Delete folders as well
         # Cleaning up any existing model files and directories
-        if not os.path.exists('model'):
-            os.mkdir('model')
+        if not os.path.exists('/tmp/model'):
+            os.mkdir('/tmp/model')
         else:
-            for the_file in os.listdir('model'):
-                file_path = os.path.join('model', the_file)
+            for the_file in os.listdir('/tmp/model'):
+                file_path = os.path.join('/tmp/model', the_file)
                 try:
                     if os.path.isfile(file_path):
                         os.unlink(file_path)
@@ -74,13 +79,14 @@ def handler(ctx, data=None, loop=None):
                     logger.info('Unable to delete files in the model directory!')
 
         # Loading the input training dataset into memory
-        train_data = pd.read_csv('data/train_data.csv', sep=data_file_delimiter, header=None)
-        logger.info('Loaded file!')
+        train_data = pd.read_csv('/tmp/data/train_data.csv', sep=data_file_delimiter, header=None)
+        logger.info('Loaded the input training data into memory!')
 
         # Separation of the input training dataset into labels and features
         n_outputs = body.get('n_outputs')
         train_y = np.array(train_data.iloc[:, 0:n_outputs])
         train_X = np.array(train_data.drop(train_data.columns[0:n_outputs], axis=1))
+        logger.info('Finished pre-processing the data!')
 
         # Initialisation of the Random Forest algorithm with the estimator parameters
         if estimator_params is not None:
@@ -90,15 +96,16 @@ def handler(ctx, data=None, loop=None):
 
         # Fitting the model to the input training data
         rf.fit(train_X, train_y)
-        logger.info('Finished training!')
+        logger.info('Finished fitting the model!')
 
-        # Persisting the model into function's local storage
-        joblib.dump(rf, 'model/model.pkl')
-        logger.info('Dumped model!')
+        # Persisting t2he model into function's local storage
+        joblib.dump(rf, '/tmp/model/model.pkl')
+        logger.info('Persisted the model locally!')
 
         # Uploading the model into remote storage
-        minio_put_object(minio_client, model_object_bucket_name,  model_object_name, 'model/model.pkl', logger)
-        logger.info('Uploaded file to bucket: {0} with object name: {1}!'.format(model_object_bucket_name, model_object_name))
+        minio_put_object(minio_client, model_object_bucket_name,  model_object_name, '/tmp/model/model.pkl', logger)
+        logger.info('Uploaded the model file to bucket: {0} with object name: {1}!'.format(model_object_bucket_name,
+                                                                                 model_object_name))
 
         # TODO - Return codes
         return {"message": "Completed successfully!!!"}

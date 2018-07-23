@@ -1,7 +1,7 @@
 name: train
-version: 0.0.68
+version: 0.0.96
 runtime: python
 entrypoint: python3 func.py
 memory: 8192
 format: json
-timeout: 120
+timeout: 3600

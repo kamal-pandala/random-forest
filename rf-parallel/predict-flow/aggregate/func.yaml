@@ -1,7 +1,7 @@
 name: aggregate
-version: 0.0.58
+version: 0.0.88
 runtime: python
 entrypoint: python3 func.py
 memory: 8192
 format: json
-timeout: 120
+timeout: 3600

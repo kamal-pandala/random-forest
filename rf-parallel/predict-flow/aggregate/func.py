@@ -35,11 +35,14 @@ def handler(ctx, data=None, loop=None):
         n_outputs = body.get('n_outputs')
 
         # Cleaning up any existing output files and directories
-        if not os.path.exists('output'):
-            os.mkdir('output')
+        if not os.path.exists('/tmp'):
+            os.mkdir('/tmp')
+
+        if not os.path.exists('/tmp/output'):
+            os.mkdir('/tmp/output')
         else:
-            for the_file in os.listdir('output'):
-                file_path = os.path.join('output', the_file)
+            for the_file in os.listdir('/tmp/output'):
+                file_path = os.path.join('/tmp/output', the_file)
                 try:
                     if os.path.isfile(file_path):
                         os.unlink(file_path)
@@ -55,16 +58,16 @@ def handler(ctx, data=None, loop=None):
 
         if n_outputs == 1:
             minio_get_all_objects(minio_client, output_bucket_name, output_object_prefix_name,
-                                  'output', logger)
+                                  '/tmp/output', logger)
 
             # Deleting previously existing aggregated predictions file if any
-            if os.path.isfile('output/final_predictions.csv'):
-                os.unlink('output/final_predictions.csv')
+            if os.path.isfile('/tmp/output/final_predictions.csv'):
+                os.unlink('/tmp/output/final_predictions.csv')
 
             # Loading all the predictions files into memory
             predictions = []
-            for the_file in os.listdir('output'):
-                file_path = os.path.join('output', the_file)
+            for the_file in os.listdir('/tmp/output'):
+                file_path = os.path.join('/tmp/output', the_file)
                 try:
                     if os.path.isfile(file_path):
                         predictions.append(np.array(pd.read_csv(file_path, sep=output_file_delimiter, header=None)))
@@ -81,22 +84,22 @@ def handler(ctx, data=None, loop=None):
             final_prediction = np.argmax(combined_prediction, axis=1)
 
             # Persisting the final aggregated predictions file
-            np.savetxt('output/final_predictions.csv', final_prediction, delimiter=output_file_delimiter)
+            np.savetxt('/tmp/output/final_predictions.csv', final_prediction, delimiter=output_file_delimiter)
             minio_put_object(minio_client, output_bucket_name, output_object_prefix_name + '/final_predictions.csv',
-                             'output/final_predictions.csv', logger)
+                             '/tmp/output/final_predictions.csv', logger)
             logger.info('Uploaded the final prediction file!')
         else:
             # Downloading all the predictions files into memory for each output at a time
             multioutput_predictions = []
             for i in range(n_outputs):
-                os.mkdir('output/output_' + str(i))
+                os.mkdir('/tmp/output/output_' + str(i))
                 minio_get_all_objects(minio_client, output_bucket_name, output_object_prefix_name + '/output_' + str(i),
-                                      'output/output_' + str(i), logger)
+                                      '/tmp/output/output_' + str(i), logger)
 
                 # Loading all the predictions files into memory
                 predictions = []
-                for the_file in os.listdir('output/output_' + str(i)):
-                    file_path = os.path.join('output/output_' + str(i), the_file)
+                for the_file in os.listdir('/tmp/output/output_' + str(i)):
+                    file_path = os.path.join('/tmp/output/output_' + str(i), the_file)
                     try:
                         if os.path.isfile(file_path):
                             predictions.append(np.array(pd.read_csv(file_path, sep=output_file_delimiter, header=None)))
@@ -115,9 +118,9 @@ def handler(ctx, data=None, loop=None):
             final_predictions = reduce(concatenate_multioutput_predictions, multioutput_predictions)
 
             # Persisting the final aggregated predictions file
-            np.savetxt('output/final_predictions.csv', final_predictions, delimiter=output_file_delimiter)
+            np.savetxt('/tmp/output/final_predictions.csv', final_predictions, delimiter=output_file_delimiter)
             minio_put_object(minio_client, output_bucket_name, output_object_prefix_name + '/final_predictions.csv',
-                             'output/final_predictions.csv', logger)
+                             '/tmp/output/final_predictions.csv', logger)
 
         return {"message": "Completed successfully!!!"}
     else:
