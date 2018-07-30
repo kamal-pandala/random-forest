@@ -17,7 +17,7 @@ public class TrainFlow {
     }
 
     private static final Logger log = LoggerFactory.getLogger(TrainFlow.class);
-    private static final int FUNCTION_LIMIT = 8;
+    private static final int FUNCTION_LIMIT = 12;
     private static final int N_CORES_PER_FUNCTION = 1;
 
     public TrainResponse handleRequest(TrainParams trainParams) {

@@ -4,5 +4,6 @@ runtime: java
 cmd: com.example.fn.TrainFlow::handleRequest
 build_image: fnproject/fn-java-fdk-build:jdk9-1.0.62
 run_image: fnproject/fn-java-fdk:jdk9-1.0.62
+memory: 8192
 format: http
 timeout: 3600
