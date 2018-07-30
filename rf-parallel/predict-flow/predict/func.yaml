@@ -1,5 +1,5 @@
-name: predict
-version: 0.0.100
+name: kamalpandala/rfc-predict
+version: 0.0.1
 runtime: python
 entrypoint: python3 func.py
 memory: 8192

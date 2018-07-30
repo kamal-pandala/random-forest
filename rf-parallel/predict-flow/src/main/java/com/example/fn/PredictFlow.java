@@ -23,7 +23,7 @@ public class PredictFlow {
     }
 
     private static final Logger log = LoggerFactory.getLogger(PredictFlow.class);
-    private static final int FUNCTION_LIMIT = 4;
+    private static final int FUNCTION_LIMIT = 12;
 
     public static MinioClient getMinioClient(String endpoint, int port, String accessKey, String secretKey,
                                              String region, boolean secure) {

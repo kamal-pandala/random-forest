@@ -1,5 +1,5 @@
-name: aggregate
-version: 0.0.88
+name: kamalpandala/rfc-predict-aggregate
+version: 0.0.1
 runtime: python
 entrypoint: python3 func.py
 memory: 8192

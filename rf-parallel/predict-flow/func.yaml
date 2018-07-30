@@ -1,5 +1,5 @@
-name: predict-flow
-version: 0.0.87
+name: kamalpandala/rfc-predict-flow
+version: 0.0.1
 runtime: java
 cmd: com.example.fn.PredictFlow::handleRequest
 build_image: fnproject/fn-java-fdk-build:jdk9-1.0.62
