@@ -1,4 +1,4 @@
-name: kamalpandala/rfc-train-flow
+name: kamalpandala/rfc-train
 version: 0.0.1
 runtime: python
 entrypoint: python3 func.py

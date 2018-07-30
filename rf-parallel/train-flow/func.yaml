@@ -1,4 +1,4 @@
-name: kamalpandala/rfc-train
+name: kamalpandala/rfc-train-flow
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.TrainFlow::handleRequest
