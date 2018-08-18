@@ -79,8 +79,8 @@ async def planner(body, logger):
         model_list = []
         for model in await asyncio.gather(*futures):
             model_list.append(model)
-        if all(model == model_list[0] for model in model_list):
-            return model[0]
+        if all(model is not None for model in model_list):
+            return model_list[0]
         else:
             pass
 
@@ -95,10 +95,8 @@ async def handler(ctx, data=None, loop=None):
             loop = asyncio.get_event_loop()
             logger.info('Created new loop in handler!!!')
 
-        task = await asyncio.ensure_future(planner(body, logger), loop=loop)
+        model_object = await asyncio.ensure_future(planner(body, logger), loop=loop)
         logger.info('Loop completed in handler!!!')
-
-        model_object = task.result()
 
     return json.dumps(model_object.__dict__)
 
