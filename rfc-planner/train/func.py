@@ -16,7 +16,8 @@ async def planner(body):
     train_data_object = DataObject(body.get('data_bucket_name'), body.get('data_object_name'))
     model_object = ModelObject(body.get('model_object_bucket_name'))
 
-    lb_response = requests.get('http://127.0.0.1:8081/1/lb/nodes')
+    lb_endpoint = body.get('lb_planner_endpoint')
+    lb_response = requests.get('http://' + lb_endpoint + ':8081/1/lb/nodes')
     n_nodes = len(lb_response.json().get('nodes'))
     n_estimators_per_node = n_estimators // n_nodes
     n_r_estimators = n_estimators % n_nodes
@@ -34,7 +35,7 @@ async def planner(body):
 
         estimator_params['n_estimators'] = n
         rfc = RandomForestClassifier(**estimator_params)
-        estimator_client = EstimatorClient('127.0.0.1', '8081', False)
+        estimator_client = EstimatorClient(lb_endpoint, '8081', False)
 
         fit_async.append(partial(estimator_client.fit, rfc, storage_client, train_data_object,
                                  model_object, n_outputs=body.get('n_outputs'),
