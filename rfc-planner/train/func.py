@@ -86,7 +86,12 @@ def handler(ctx, data=None, loop=None):
         body = json.loads(data)
 
         logger.info('Resuming loop in handler!!!')
-        loop.create_task(planner(body, loop, logger))
+        if loop is None:
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+            loop = asyncio.get_event_loop()
+            logger.info('Created new loop in handler!!!')
+
+        asyncio.ensure_future(planner(body, loop, logger), loop=loop)
         logger.info('Loop completed in handler!!!')
 
     return {"message": "Hello"}
