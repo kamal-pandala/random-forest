@@ -27,7 +27,7 @@ def get_logger(ctx):
     return root
 
 
-async def planner(body, logger):
+async def planner(body, loop, logger):
     estimator_params = body.get('estimator_params')
     n_estimators = estimator_params['n_estimators']
     logger.info('No. of required estimators: ' + str(n_estimators))
@@ -67,7 +67,7 @@ async def planner(body, logger):
     logger.info('Initialised fit_async objects!!!')
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_nodes) as executor:
-        loop = asyncio.get_event_loop()
+        # loop = asyncio.get_event_loop()
         futures = [
             loop.run_in_executor(
                 executor,
@@ -85,11 +85,8 @@ def handler(ctx, data=None, loop=None):
         logger = get_logger(ctx)
         body = json.loads(data)
 
-        logger.info('Starting loop in handler!!!')
-        loop = asyncio.get_event_loop()
-        logger.info('Created new loop!!!')
-
-        loop.run_until_complete(planner(body, logger))
+        logger.info('Resuming loop in handler!!!')
+        loop.create_task(planner(body, loop, logger))
         logger.info('Loop completed in handler!!!')
 
     return {"message": "Hello"}
