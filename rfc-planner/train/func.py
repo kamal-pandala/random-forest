@@ -1,6 +1,7 @@
 import fdk
 import json
 import sys
+import uuid
 import asyncio
 import requests
 import logging
@@ -34,7 +35,10 @@ async def planner(body, logger):
     storage_client = StorageClient(body.get('endpoint'), body.get('port'), body.get('access_key'),
                                    body.get('secret_key'), body.get('secure'))
     train_data_object = DataObject(body.get('data_bucket_name'), body.get('data_object_name'))
-    model_object = ModelObject(body.get('model_object_bucket_name'))
+
+    unique_id = uuid.uuid4()
+    model_object = ModelObject(body.get('model_object_bucket_name'),
+                               model_object_prefix_name=str(unique_id))
 
     lb_endpoint = body.get('lb_planner_endpoint')
     lb_response = requests.get('http://' + lb_endpoint + ':8081/1/lb/nodes')
@@ -72,8 +76,13 @@ async def planner(body, logger):
             )
             for i in range(n_nodes)
         ]
-        for response in await asyncio.gather(*futures):
-            print(response)
+        model_list = []
+        for model in await asyncio.gather(*futures):
+            model_list.append(model)
+        if all(model == model_list[0] for model in model_list):
+            return model[0]
+        else:
+            pass
 
 
 async def handler(ctx, data=None, loop=None):
@@ -86,10 +95,12 @@ async def handler(ctx, data=None, loop=None):
             loop = asyncio.get_event_loop()
             logger.info('Created new loop in handler!!!')
 
-        await asyncio.ensure_future(planner(body, logger), loop=loop)
+        task = await asyncio.ensure_future(planner(body, logger), loop=loop)
         logger.info('Loop completed in handler!!!')
 
-    return {"message": "Hello"}
+        model_object = task.result()
+
+    return json.dumps(model_object.__dict__)
 
 
 

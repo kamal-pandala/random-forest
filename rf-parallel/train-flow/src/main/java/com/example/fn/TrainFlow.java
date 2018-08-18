@@ -22,10 +22,6 @@ public class TrainFlow {
 
     public TrainResponse handleRequest(TrainParams trainParams) {
 
-        // Setting unique prefix for uploading model files
-        String modelObjectPrefixName = UUID.randomUUID().toString();
-        trainParams.setModelObjectPrefixName(modelObjectPrefixName);
-
         // Setting unique prefix for the local name for data
         String dataLocalName = UUID.randomUUID().toString();
         trainParams.setDataLocalName(dataLocalName);
@@ -66,7 +62,7 @@ public class TrainFlow {
                     TrainResponse trainResponse = new TrainResponse();
                     trainResponse.setTrainSucess(true);
                     trainResponse.setModelObjectBucketName(trainParams.getModelObjectBucketName());
-                    trainResponse.setModelObjectPrefixName(modelObjectPrefixName);
+                    trainResponse.setModelObjectPrefixName(trainParams.getModelObjectPrefixName());
 
                     return currentFlow().completedValue(trainResponse);
                 });
