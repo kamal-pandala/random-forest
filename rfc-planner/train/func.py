@@ -1,13 +1,14 @@
 import fdk
 import json
 import asyncio
+import uvloop
 import requests
 import concurrent.futures
 from helper import *
 from functools import partial
 
 
-async def planner(body):
+async def planner(body, loop):
     estimator_params = body.get('estimator_params')
     n_estimators = estimator_params['n_estimators']
 
@@ -42,7 +43,7 @@ async def planner(body):
                                  aggregate_models=body.get('aggregate_models')))
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_nodes) as executor:
-        loop = asyncio.get_event_loop()
+        # loop = asyncio.get_event_loop()
         futures = [
             loop.run_in_executor(
                 executor,
@@ -59,8 +60,10 @@ def handler(ctx, data=None, loop=None):
     if data and len(data) > 0:
         body = json.loads(data)
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(planner(body))
+        if loop is None:
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+            loop = asyncio.get_event_loop()
+        loop.run_until_complete(planner(body, loop))
 
     return {"message": "Hello"}
 
