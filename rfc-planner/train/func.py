@@ -80,7 +80,7 @@ async def planner(body, loop, logger):
             print(response)
 
 
-def handler(ctx, data=None, loop=None):
+async def handler(ctx, data=None, loop=None):
     if data and len(data) > 0:
         logger = get_logger(ctx)
         body = json.loads(data)
@@ -91,7 +91,7 @@ def handler(ctx, data=None, loop=None):
             loop = asyncio.get_event_loop()
             logger.info('Created new loop in handler!!!')
 
-        asyncio.ensure_future(planner(body, loop, logger), loop=loop)
+        await asyncio.ensure_future(planner(body, loop, logger), loop=loop)
         logger.info('Loop completed in handler!!!')
 
     return {"message": "Hello"}
