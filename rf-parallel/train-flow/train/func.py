@@ -54,7 +54,7 @@ def handler(ctx, data=None, loop=None):
                                          secure=secure, region=region)
 
         # Unique ID for storing the dataset locally - useful in case of hot functions
-        local_dataset_name = body.get('local_dataset_name') + '.csv'
+        local_dataset_name = body.get('data_local_name') + '.csv'
 
         # Creating directories in function's local  storage
         # Downloading input training dataset from remote storage
