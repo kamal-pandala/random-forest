@@ -30,7 +30,7 @@ def get_logger(ctx):
 async def planner(body, logger):
     estimator_params = body.get('estimator_params')
     n_estimators = estimator_params['n_estimators']
-    logger.info('No. of required estimators: ' + n_estimators)
+    logger.info('No. of required estimators: ' + str(n_estimators))
 
     storage_client = StorageClient(body.get('endpoint'), body.get('port'), body.get('access_key'),
                                    body.get('secret_key'), body.get('secure'))
@@ -43,8 +43,8 @@ async def planner(body, logger):
     n_estimators_per_node = n_estimators // n_nodes
     n_r_estimators = n_estimators % n_nodes
 
-    logger.info('No. of estimators per node: ' + n_estimators_per_node)
-    logger.info('No. of remainder estimators: ' + n_r_estimators)
+    logger.info('No. of estimators per node: ' + str(n_estimators_per_node))
+    logger.info('No. of remainder estimators: ' + str(n_r_estimators))
 
     fit_async = []
     n_list = [0]
