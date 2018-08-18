@@ -103,9 +103,9 @@ class EstimatorClient:
         else:
             self.protocol = 'http'
 
-    def fit(self, estimator, storage_client, train_data_object, model_object, start_number, **kwargs):
+    def fit(self, estimator, storage_client, train_data_object, model_object, node_number, **kwargs):
         payload_dict = {**storage_client.__dict__, **train_data_object.__dict__, **model_object.__dict__,
-                        'estimator_params': estimator.__dict__, 'start_number': start_number, **kwargs}
+                        'estimator_params': estimator.__dict__, 'node_number': node_number, **kwargs}
 
         endpoint_url = self.protocol + '://' + self.endpoint + ':' + self.port + '/r/rf-parallel/train-flow'
         response = requests.post(endpoint_url, json=payload_dict)
@@ -116,9 +116,9 @@ class EstimatorClient:
 
         return model_object
 
-    def predict(self, estimator, storage_client, predict_data_object, model_object, output_object, start_number):
+    def predict(self, estimator, storage_client, predict_data_object, model_object, output_object, node_number):
         payload_dict = {**storage_client.__dict__, **predict_data_object.__dict__, **model_object.__dict__,
-                        **output_object.__dict__, 'start_number': start_number}
+                        **output_object.__dict__, 'node_number': node_number}
 
         endpoint_url = self.protocol + '://' + self.endpoint + ':' + self.port + '/r/rf-parallel/predict-flow'
         response = requests.post(endpoint_url, json=payload_dict)

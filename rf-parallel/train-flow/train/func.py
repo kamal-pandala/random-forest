@@ -14,6 +14,7 @@ def handler(ctx, data=None, loop=None):
         body = json.loads(data)
 
         fn_num = body.get('fn_num')
+        node_number = body.get('node_number')
         logger.info('Function {0} has started running!'.format(fn_num))
 
         # TODO - validation and exception handling
@@ -36,19 +37,25 @@ def handler(ctx, data=None, loop=None):
             data_object_name = data_object_prefix_name + '/' + data_object_name
         data_file_delimiter = body.get('data_file_delimiter')
 
+        # TODO - check type compatibility of scikit's RF implementation
+        # Parameters for the Random Forest algorithm of scikit-learn
+        estimator_params = body.get('estimator_params')
+        n_estimators = estimator_params['n_estimators']
+        for param_name in ['max_features', 'min_samples_split', 'min_samples_leaf']:
+            estimator_params = param_type_conversion(estimator_params, param_name)
+
         # Parameters for the output model file
         model_object_bucket_name = body.get('model_object_bucket_name')
         model_object_prefix_name = body.get('model_object_prefix_name')
-        model_object_name = model_object_prefix_name + '/model_' + str(fn_num) + '.pkl'
-
-        # Parameters for the Random Forest algorithm of scikit-learn
-        estimator_params = body.get('estimator_params')
-        for param_name in ["max_features", "min_samples_split", "min_samples_leaf"]:
-            estimator_params = param_type_conversion(estimator_params, param_name)
+        file_num = str(node_number) + '_' + str(fn_num)
+        model_object_name = model_object_prefix_name + '/model_' + str(file_num) + '.pkl'
 
         # Establishing connection to remote storage
         minio_client = minio_init_client(endpoint, access_key=access_key, secret_key=secret_key,
                                          secure=secure, region=region)
+
+        # Unique ID for storing the dataset locally - useful in case of hot functions
+        local_dataset_name = body.get('local_dataset_name') + '.csv'
 
         # Creating directories in function's local  storage
         # Downloading input training dataset from remote storage
@@ -57,12 +64,12 @@ def handler(ctx, data=None, loop=None):
 
         if not os.path.exists('/tmp/data'):
             os.mkdir('/tmp/data')
-            minio_get_object(minio_client, data_bucket_name, data_object_name, '/tmp/data/train_data.csv', logger)
+            minio_get_object(minio_client, data_bucket_name, data_object_name, '/tmp/data/' + local_dataset_name, logger)
             logger.info('Downloaded the input training data file!')
         else:
 
             if not os.path.exists('/tmp/data/train_data.csv'):
-                minio_get_object(minio_client, data_bucket_name, data_object_name, '/tmp/data/train_data.csv', logger)
+                minio_get_object(minio_client, data_bucket_name, data_object_name, '/tmp/data/' + local_dataset_name, logger)
                 logger.info('Downloaded the input training data file!')
 
         # TODO - Delete folders as well
@@ -79,7 +86,7 @@ def handler(ctx, data=None, loop=None):
                     logger.info('Unable to delete files in the model directory!')
 
         # Loading the input training dataset into memory
-        train_data = pd.read_csv('/tmp/data/train_data.csv', sep=data_file_delimiter, header=None)
+        train_data = pd.read_csv('/tmp/data/' + local_dataset_name, sep=data_file_delimiter, header=None)
         logger.info('Loaded the input training data into memory!')
 
         # Separation of the input training dataset into labels and features
@@ -98,7 +105,7 @@ def handler(ctx, data=None, loop=None):
         rf.fit(train_X, train_y)
         logger.info('Finished fitting the model!')
 
-        # Persisting t2he model into function's local storage
+        # Persisting the model into function's local storage
         joblib.dump(rf, '/tmp/model/model.pkl')
         logger.info('Persisted the model locally!')
 

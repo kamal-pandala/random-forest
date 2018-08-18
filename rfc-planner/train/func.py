@@ -2,7 +2,6 @@ import fdk
 import json
 import sys
 import asyncio
-import uvloop
 import requests
 import logging
 import concurrent.futures
@@ -47,15 +46,12 @@ async def planner(body, logger):
     logger.info('No. of remainder estimators: ' + str(n_r_estimators))
 
     fit_async = []
-    n_list = [0]
     for i in range(n_nodes):
         if n_r_estimators > 0:
             n = n_estimators_per_node + 1
             n_r_estimators -= 1
         else:
             n = n_estimators_per_node
-
-        n_list.append(n + n_list[-1])
 
         estimator_params['n_estimators'] = n
         rfc = RandomForestClassifier(**estimator_params)
@@ -72,7 +68,7 @@ async def planner(body, logger):
             loop.run_in_executor(
                 executor,
                 fit_async[i],
-                n_list[i]
+                i
             )
             for i in range(n_nodes)
         ]

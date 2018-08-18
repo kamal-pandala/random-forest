@@ -26,6 +26,10 @@ public class TrainFlow {
         String modelObjectPrefixName = UUID.randomUUID().toString();
         trainParams.setModelObjectPrefixName(modelObjectPrefixName);
 
+        // Setting unique prefix for the local name for data
+        String dataLocalName = UUID.randomUUID().toString();
+        trainParams.setDataLocalName(dataLocalName);
+
         // Configuring number of required functions and trees per function
         int nTreesRequired = trainParams.getEstimatorParams().getnEstimators();
         int nTreesPerFunction = 1;
