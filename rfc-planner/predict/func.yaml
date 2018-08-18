@@ -1,0 +1,5 @@
+name: kamalpandala/rfc-planner-predict
+version: 0.0.1
+runtime: python
+entrypoint: python3 func.py
+format: json

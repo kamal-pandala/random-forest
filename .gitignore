@@ -14,3 +14,5 @@ rf-parallel/predict-flow/src/main/java/com/example/fn/ParamsChecker\.java
 rf-parallel/predict-flow/target/
 
 *.iml
+
+rfc-planner/\.idea/

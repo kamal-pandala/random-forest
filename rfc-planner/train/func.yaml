@@ -1,0 +1,7 @@
+name: kamalpandala/rfc-planner-train
+version: 0.0.1
+runtime: python
+entrypoint: python3 func.py
+memory: 1024
+format: json
+timeout: 3600
