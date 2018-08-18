@@ -15,7 +15,7 @@ def handler(ctx, data=None, loop=None):
 
         fn_num = body.get('fn_num')
         node_number = body.get('node_number')
-        logger.info('Function {0} has started running!'.format(fn_num))
+        logger.info('Function {0} on node {1} has started running!'.format(fn_num, node_number))
 
         # TODO - validation and exception handling
         # Parameters required for initialising minio client
@@ -40,7 +40,6 @@ def handler(ctx, data=None, loop=None):
         # TODO - check type compatibility of scikit's RF implementation
         # Parameters for the Random Forest algorithm of scikit-learn
         estimator_params = body.get('estimator_params')
-        n_estimators = estimator_params['n_estimators']
         for param_name in ['max_features', 'min_samples_split', 'min_samples_leaf']:
             estimator_params = param_type_conversion(estimator_params, param_name)
 
@@ -48,7 +47,7 @@ def handler(ctx, data=None, loop=None):
         model_object_bucket_name = body.get('model_object_bucket_name')
         model_object_prefix_name = body.get('model_object_prefix_name')
         file_num = str(node_number) + '_' + str(fn_num)
-        model_object_name = model_object_prefix_name + '/model_' + str(file_num) + '.pkl'
+        model_object_name = model_object_prefix_name + '/model_' + file_num + '.pkl'
 
         # Establishing connection to remote storage
         minio_client = minio_init_client(endpoint, access_key=access_key, secret_key=secret_key,
