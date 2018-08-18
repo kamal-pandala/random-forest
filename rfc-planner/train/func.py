@@ -3,14 +3,33 @@ import json
 import asyncio
 import uvloop
 import requests
+import logging
 import concurrent.futures
 from helper import *
 from functools import partial
 
 
-async def planner(body, loop):
+def get_logger(ctx):
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+    ch = logging.StreamHandler(sys.stderr)
+    call_id = ctx.CallID()
+    formatter = logging.Formatter(
+        '[call: {0}] - '.format(call_id) +
+        '%(asctime)s - '
+        '%(name)s - '
+        '%(levelname)s - '
+        '%(message)s'
+    )
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
+    return root
+
+
+async def planner(body, loop, logger):
     estimator_params = body.get('estimator_params')
     n_estimators = estimator_params['n_estimators']
+    logger.info('No. of required estimators: ' + n_estimators)
 
     storage_client = StorageClient(body.get('endpoint'), body.get('port'), body.get('access_key'),
                                    body.get('secret_key'), body.get('secure'))
@@ -22,6 +41,9 @@ async def planner(body, loop):
     n_nodes = len(lb_response.json().get('nodes'))
     n_estimators_per_node = n_estimators // n_nodes
     n_r_estimators = n_estimators % n_nodes
+
+    logger.info('No. of estimators per node: ' + n_estimators_per_node)
+    logger.info('No. of remainder estimators: ' + n_r_estimators)
 
     fit_async = []
     n_list = [0]
@@ -41,6 +63,7 @@ async def planner(body, loop):
         fit_async.append(partial(estimator_client.fit, rfc, storage_client, train_data_object,
                                  model_object, n_outputs=body.get('n_outputs'),
                                  aggregate_models=body.get('aggregate_models')))
+    logger.info('Initialised fit_async objects!!!')
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_nodes) as executor:
         # loop = asyncio.get_event_loop()
@@ -58,12 +81,17 @@ async def planner(body, loop):
 
 def handler(ctx, data=None, loop=None):
     if data and len(data) > 0:
+        logger = get_logger(ctx)
         body = json.loads(data)
 
+        logger.info('Starting loop in handler!!!')
         if loop is None:
             asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
             loop = asyncio.get_event_loop()
-        loop.run_until_complete(planner(body, loop))
+            logger.info('Created new loop!!!')
+
+        loop.run_until_complete(planner(body, loop, logger))
+        logger.info('Loop completed in handler!!!')
 
     return {"message": "Hello"}
 
