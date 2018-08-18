@@ -107,11 +107,7 @@ class EstimatorClient:
         payload_dict = {**storage_client.__dict__, **train_data_object.__dict__, **model_object.__dict__,
                         'estimator_params': estimator.__dict__, 'start_number': start_number, **kwargs}
 
-        if estimator.name == 'RandomForestClassifier':
-            endpoint_url = self.protocol + '://' + self.endpoint + ':' + self.port + '/r/rf-parallel/train-flow'
-        elif estimator.name == 'KMeans':
-            endpoint_url = self.protocol + '://' + self.endpoint + ':' + self.port + '/r/km-parallel/train-flow'
-
+        endpoint_url = self.protocol + '://' + self.endpoint + ':' + self.port + '/r/rf-parallel/train-flow'
         response = requests.post(endpoint_url, json=payload_dict)
 
         body = response.json()
@@ -124,11 +120,7 @@ class EstimatorClient:
         payload_dict = {**storage_client.__dict__, **predict_data_object.__dict__, **model_object.__dict__,
                         **output_object.__dict__, 'start_number': start_number}
 
-        if estimator.name == 'RandomForestClassifier':
-            endpoint_url = self.protocol + '://' + self.endpoint + ':' + self.port + '/r/rf-parallel/predict-flow'
-        elif estimator.name == 'KMeans':
-            endpoint_url = self.protocol + '://' + self.endpoint + ':' + self.port + '/r/km-parallel/predict-flow'
-
+        endpoint_url = self.protocol + '://' + self.endpoint + ':' + self.port + '/r/rf-parallel/predict-flow'
         response = requests.post(endpoint_url, json=payload_dict)
 
         body = response.json()
