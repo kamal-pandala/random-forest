@@ -24,6 +24,20 @@ def minio_put_object(client, bucketname, objectname, filepath, logger):
         logger.info(err)
 
 
+def minio_get_objects_in_range(client, bucketname, prefixname, local_file_prefix, start, count, logger):
+    try:
+        objects = client.list_objects_v2(bucketname, prefix=prefixname, recursive=True)
+        current_index = 0
+        for obj in objects:
+            if current_index >= start and count > 0:
+                minio_get_object(client, bucketname, obj.object_name,
+                             local_file_prefix + '/' + obj.object_name.split('/')[1], logger)
+                count -= 1
+            current_index += 1
+    except ResponseError as err:
+        logger.info(err)
+
+
 def get_logger(ctx):
     root = logging.getLogger()
     root.setLevel(logging.INFO)

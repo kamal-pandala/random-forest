@@ -13,6 +13,9 @@ def handler(ctx, data=None, loop=None):
         logger = get_logger(ctx)
         body = json.loads(data)
 
+        node_number = body.get('node_number')
+        logger.info('Aggregate function on node {0} has started running!'.format(node_number))
+
         # TODO - validation and exception handling
         # Parameters required for initialising minio client
         endpoint = body.get('endpoint')
@@ -28,6 +31,7 @@ def handler(ctx, data=None, loop=None):
         # Parameters for the output prediction file
         output_bucket_name = body.get('output_bucket_name')
         output_object_prefix_name = body.get('output_object_prefix_name')
+        output_object_prefix_name += '/' + node_number
         output_file_delimiter = body.get("output_file_delimiter")
 
         # Parameters of the problem
@@ -54,11 +58,11 @@ def handler(ctx, data=None, loop=None):
         # Establishing connection to remote storage
         minio_client = minio_init_client(endpoint, access_key=access_key, secret_key=secret_key,
                                          secure=secure, region=region)
-        logger.info('Downloaded the prediction files!')
 
         if n_outputs == 1:
             minio_get_all_objects(minio_client, output_bucket_name, output_object_prefix_name,
                                   '/tmp/output', logger)
+            logger.info('Downloaded the prediction files!')
 
             # Deleting previously existing aggregated predictions file if any
             if os.path.isfile('/tmp/output/final_predictions.csv'):

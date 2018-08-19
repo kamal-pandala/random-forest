@@ -56,16 +56,24 @@ public class PredictFlow {
 
     public PredictResponse handleRequest(PredictParams predictParams) {
 
-        // Setting unique prefix for uploading output files
-        String outputObjectPrefixName = UUID.randomUUID().toString();
-        predictParams.setOutputObjectPrefixName(outputObjectPrefixName);
+//        // Obtain the number of model files in the remote storage
+//        MinioClient minioClient = getMinioClient(predictParams.getEndpoint(), predictParams.getPort(),
+//                predictParams.getAccessKey(), predictParams.getSecretKey(),
+//                predictParams.getRegion(), predictParams.getSecure());
+//        Integer modelFileCount = getModelFileCount(minioClient, predictParams.getModelObjectBucketName(),
+//                predictParams.getModelObjectPrefixName());
 
-        // Obtain the number of model files in the remote storage
-        MinioClient minioClient = getMinioClient(predictParams.getEndpoint(), predictParams.getPort(),
-                predictParams.getAccessKey(), predictParams.getSecretKey(),
-                predictParams.getRegion(), predictParams.getSecure());
-        Integer modelFileCount = getModelFileCount(minioClient, predictParams.getModelObjectBucketName(),
-                predictParams.getModelObjectPrefixName());
+        // Setting unique prefix for the local name for data
+        String dataLocalName = UUID.randomUUID().toString();
+        predictParams.setDataLocalName(dataLocalName);
+
+        Integer modelFileCount = predictParams.getModelFileCount();
+
+        String nodeId = predictParams.getNodeNumber();
+        String nodeNumber = nodeId.split(":")[0];
+        predictParams.setNodeNumber(nodeNumber);
+
+        Integer currentIndex = Integer.parseInt(nodeId.split(":")[1]);
 
         // Configuring no. of required functions and predictions per function
         int nPredictionsPerFunction = 1;
@@ -79,7 +87,6 @@ public class PredictFlow {
 
         // Invoking training jobs and storing references to their futures
         ArrayList<FlowFuture<HttpResponse>> predictParamsList = new ArrayList<>();
-        int currentIndex = 0;
         for(int i = 0; i < nFunctionsRequired; i++) {
             predictParams.setFnNum(i);
             if (nRemainderPredictions > 0) {
@@ -114,6 +121,7 @@ public class PredictFlow {
                     }
 
                     AggregateParams aggregateParams = new AggregateParams();
+                    aggregateParams.setNodeNumber(predictParams.getNodeNumber());
                     aggregateParams.setEndpoint(predictParams.getEndpoint());
                     aggregateParams.setPort(predictParams.getPort());
                     aggregateParams.setAccessKey(predictParams.getAccessKey());
@@ -121,7 +129,7 @@ public class PredictFlow {
                     aggregateParams.setSecure(predictParams.getSecure());
                     aggregateParams.setRegion(predictParams.getRegion());
                     aggregateParams.setOutputBucketName(predictParams.getOutputBucketName());
-                    aggregateParams.setOutputObjectPrefixName(outputObjectPrefixName);
+                    aggregateParams.setOutputObjectPrefixName(predictParams.getOutputObjectPrefixName());
                     aggregateParams.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
                     aggregateParams.setnEstimators(n_estimators);
                     aggregateParams.setnOutputs(n_outputs);
@@ -136,7 +144,7 @@ public class PredictFlow {
             PredictResponse predictResponse = new PredictResponse();
             predictResponse.setPredictSucess(true);
             predictResponse.setOutputBucketName(predictParams.getOutputBucketName());
-            predictResponse.setOutputObjectPrefixName(outputObjectPrefixName);
+            predictResponse.setOutputObjectPrefixName(predictParams.getOutputObjectPrefixName() + '/' + nodeNumber);
             predictResponse.setOutputObjectName("final_predictions.csv");
             predictResponse.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
 
