@@ -21,7 +21,8 @@ def minio_init_client(endpoint, access_key=None, secret_key=None, secure=True,
 def minio_count_objects(client, bucketname, prefixname, logger):
     try:
         objects = client.list_objects_v2(bucketname, prefix=prefixname, recursive=True)
-        return len(objects)
+        count = sum(1 for _ in objects)
+        return count
     except ResponseError as err:
         logger.info(err)
         return 0
@@ -44,9 +45,9 @@ def get_logger(ctx):
     return root
 
 
-async def planner(body, logger):
+async def planner_1(body, logger):
     storage_client = StorageClient(body.get('endpoint'), body.get('port'), body.get('access_key'),
-                                   body.get('secret_key'), body.get('secure'))
+                                   body.get('secret_key'), body.get('secure'), body.get('region'))
     predict_data_object = DataObject(body.get('data_bucket_name'), body.get('data_object_name'))
 
     unique_id = uuid.uuid4()
@@ -69,7 +70,8 @@ async def planner(body, logger):
     # Establishing connection to remote storage
     minio_client = minio_init_client(endpoint, access_key=access_key, secret_key=secret_key,
                                      secure=secure, region=region)
-    file_count = minio_count_objects(minio_client, model_object.model_object_bucket_name, model_object.model_object_prefix_name)
+    file_count = minio_count_objects(minio_client, model_object.model_object_bucket_name,
+                                     model_object.model_object_prefix_name, logger)
     logger.info('No. of model files: ' + str(file_count))
 
     lb_endpoint = body.get('lb_planner_endpoint')
@@ -112,9 +114,31 @@ async def planner(body, logger):
         for output in await asyncio.gather(*futures):
             output_list.append(output)
         if all(output is not None for output in output_list):
-            return output_list[0]
+            n_estimators = 0
+            for output in output_list:
+                n_estimators += output.n_estimators
+            logger.info('No. of total estimators: ' + n_estimators)
+            return output_object, n_estimators
         else:
             pass
+
+
+async def planner_2(body, output_object, n_estimators, logger):
+    logger.info('Inside planner_2!!!')
+
+    storage_client = StorageClient(body.get('endpoint'), body.get('port'), body.get('access_key'),
+                                   body.get('secret_key'), body.get('secure'), body.get('region'))
+    n_outputs = body.get('n_outputs')
+
+    payload_dict = {**storage_client.__dict__, **output_object.__dict__,
+                    'n_outputs': n_outputs, 'n_estimators': n_estimators}
+
+    lb_endpoint = body.get('lb_planner_endpoint')
+    endpoint_url = 'http://' + lb_endpoint + ':8081' + '/r/rf-parallel/predict-flow/global-aggregate'
+    response = requests.post(endpoint_url, json=payload_dict)
+    logger.info(response.text)
+
+    return output_object
 
 
 async def handler(ctx, data=None, loop=None):
@@ -127,7 +151,8 @@ async def handler(ctx, data=None, loop=None):
             loop = asyncio.get_event_loop()
             logger.info('Created new loop in handler!!!')
 
-        output_object = await asyncio.ensure_future(planner(body, logger), loop=loop)
+        output_object, n_estimators = await asyncio.ensure_future(planner_1(body, logger), loop=loop)
+        output_object = await asyncio.ensure_future(planner_2(body, output_object, n_estimators, logger), loop=loop)
         logger.info('Loop completed in handler!!!')
 
     return json.dumps(output_object.__dict__)

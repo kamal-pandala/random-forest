@@ -22,6 +22,12 @@ public class PredictResponse implements Serializable {
     @JsonProperty("output_file_delimiter")
     private String outputFileDelimiter;
 
+    @JsonProperty("n_estimators")
+    private Integer nEstimators;
+
+    @JsonProperty("n_outputs")
+    private Integer nOutputs;
+
     @JsonProperty("predict_success")
     public Boolean getPredictSucess() {
         return predictSucess;
@@ -70,5 +76,25 @@ public class PredictResponse implements Serializable {
     @JsonProperty("output_file_delimiter")
     public void setOutputFileDelimiter(String outputFileDelimiter) {
         this.outputFileDelimiter = outputFileDelimiter;
+    }
+
+    @JsonProperty("n_estimators")
+    public Integer getnEstimators() {
+        return nEstimators;
+    }
+
+    @JsonProperty("n_estimators")
+    public void setnEstimators(Integer nEstimators) {
+        this.nEstimators = nEstimators;
+    }
+
+    @JsonProperty("n_outputs")
+    public Integer getnOutputs() {
+        return nOutputs;
+    }
+
+    @JsonProperty("n_outputs")
+    public void setnOutputs(Integer nOutputs) {
+        this.nOutputs = nOutputs;
     }
 }

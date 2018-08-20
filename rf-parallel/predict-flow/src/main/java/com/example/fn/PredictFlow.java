@@ -134,12 +134,18 @@ public class PredictFlow {
                     aggregateParams.setnEstimators(n_estimators);
                     aggregateParams.setnOutputs(n_outputs);
 
-                    return currentFlow().invokeFunction("rf-parallel/predict-flow/aggregate",
+                    return currentFlow().invokeFunction("rf-parallel/predict-flow/local-aggregate",
                         aggregateParams);
                 });
 
         FlowFuture<PredictResponse> predictFuture = aggregateFlow.thenCompose((v) -> {
             // TODO - Failure logic
+
+            String aggregateResponse = new String(aggregateFlow.get().getBodyAsBytes());
+            aggregateResponse = aggregateResponse.substring(1, aggregateResponse.length() - 1);
+            String[] aggregateAttrs = aggregateResponse.split(",");
+            int n_outputs = Integer.parseInt(aggregateAttrs[0]);
+            int n_estimators = Integer.parseInt(aggregateAttrs[1]);
 
             PredictResponse predictResponse = new PredictResponse();
             predictResponse.setPredictSucess(true);
@@ -147,6 +153,8 @@ public class PredictFlow {
             predictResponse.setOutputObjectPrefixName(predictParams.getOutputObjectPrefixName() + '/' + nodeNumber);
             predictResponse.setOutputObjectName("final_predictions.csv");
             predictResponse.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
+            predictResponse.setnOutputs(n_outputs);
+            predictResponse.setnEstimators(n_estimators);
 
             return currentFlow().completedValue(predictResponse);
         });

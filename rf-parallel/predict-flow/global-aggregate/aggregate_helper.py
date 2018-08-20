@@ -30,7 +30,7 @@ def minio_get_all_objects(client, bucketname, prefixname, local_file_prefix, log
         objects = client.list_objects_v2(bucketname, prefix=prefixname, recursive=True)
         for obj in objects:
             minio_get_object(client, bucketname, obj.object_name,
-                             local_file_prefix + '/' + obj.object_name.split('/')[1], logger)
+                             local_file_prefix + '/' + obj.object_name.split('/')[-1], logger)
     except ResponseError as err:
         logger.info(err)
 

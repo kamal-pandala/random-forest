@@ -1,5 +1,6 @@
 import sys
 import logging
+import numpy as np
 from minio import Minio
 from minio.error import ResponseError
 
@@ -24,16 +25,12 @@ def minio_put_object(client, bucketname, objectname, filepath, logger):
         logger.info(err)
 
 
-def minio_get_objects_in_range(client, bucketname, prefixname, local_file_prefix, start, count, logger):
+def minio_get_all_objects(client, bucketname, prefixname, local_file_prefix, logger):
     try:
         objects = client.list_objects_v2(bucketname, prefix=prefixname, recursive=True)
-        current_index = 0
         for obj in objects:
-            if current_index >= start and count > 0:
-                minio_get_object(client, bucketname, obj.object_name,
+            minio_get_object(client, bucketname, obj.object_name,
                              local_file_prefix + '/' + obj.object_name.split('/')[-1], logger)
-                count -= 1
-            current_index += 1
     except ResponseError as err:
         logger.info(err)
 
@@ -55,7 +52,11 @@ def get_logger(ctx):
     return root
 
 
-def combine_rfs(rf_a, rf_b):
-    rf_a.estimators_ += rf_b.estimators_
-    rf_a.n_estimators = len(rf_a.estimators_)
-    return rf_a
+def combine_predictions(prediction_a, prediction_b):
+    prediction_a += prediction_b
+    return prediction_a
+
+
+def concatenate_multioutput_predictions(predictions_a, predictions_b):
+    predictions_a = np.concatenate((predictions_a, predictions_b), axis=1)
+    return predictions_a

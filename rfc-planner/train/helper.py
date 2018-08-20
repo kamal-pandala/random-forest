@@ -116,7 +116,7 @@ class EstimatorClient:
 
         return model_object
 
-    def predict(self, estimator, storage_client, predict_data_object, model_object, output_object, node_number, **kwargs):
+    def predict(self, storage_client, predict_data_object, model_object, output_object, node_number, **kwargs):
         payload_dict = {**storage_client.__dict__, **predict_data_object.__dict__, **model_object.__dict__,
                         **output_object.__dict__, 'node_number': node_number, **kwargs}
 
