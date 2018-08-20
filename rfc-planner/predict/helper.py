@@ -34,11 +34,12 @@ class ModelObject:
 
 class OutputObject:
     def __init__(self, output_bucket_name, output_object_name=None, output_object_prefix_name=None,
-                 output_file_delimiter=','):
+                 output_file_delimiter=',', output_attributes=None):
         self.output_bucket_name = output_bucket_name
         self.output_object_name = output_object_name
         self.output_object_prefix_name = output_object_prefix_name
         self.output_file_delimiter = output_file_delimiter
+        self.output_attributes = output_attributes
 
     def set_output_object_prefix_name(self, output_object_prefix_name):
         self.output_object_prefix_name = output_object_prefix_name
@@ -49,6 +50,8 @@ class OutputObject:
     def set_output_file_delimiter(self, output_file_delimiter):
         self.output_file_delimiter = output_file_delimiter
 
+    def set_output_attributes(self, output_attributes):
+        self.output_attributes = output_attributes
 
 class RandomForestClassifier:
     def __init__(self, name='RandomForestClassifier', n_estimators=10, criterion="gini", max_depth=None, min_samples_split=2,
@@ -127,5 +130,8 @@ class EstimatorClient:
         output_object.set_output_object_prefix_name(body.get('output_object_prefix_name'))
         output_object.set_output_object_name(body.get('output_object_name'))
         output_object.set_output_file_delimiter(body.get('output_file_delimiter'))
+
+        output_attributes = {'n_estimators': body.get('n_estimators')}
+        output_object.set_output_attributes(output_attributes)
 
         return output_object

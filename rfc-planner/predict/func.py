@@ -116,7 +116,7 @@ async def planner_1(body, logger):
         if all(output is not None for output in output_list):
             n_estimators = 0
             for output in output_list:
-                n_estimators += output.n_estimators
+                n_estimators += output.output_attributes['n_estimators']
             logger.info('No. of total estimators: ' + n_estimators)
             return output_object, n_estimators
         else:
