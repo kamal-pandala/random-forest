@@ -117,18 +117,19 @@ async def planner_1(body, logger):
             n_estimators = 0
             for output in output_list:
                 n_estimators += output.output_attributes['n_estimators']
-            logger.info('No. of total estimators: ' + n_estimators)
-            return output_object, n_estimators
+            n_outputs = output_list[0].output_attributes['n_outputs']
+            logger.info('No. of total estimators: ' + str(n_estimators))
+            logger.info('No. of outputs: ' + str(n_outputs))
+            return output_object, n_estimators, n_outputs
         else:
             pass
 
 
-async def planner_2(body, output_object, n_estimators, logger):
+async def planner_2(body, output_object, n_estimators, n_outputs, logger):
     logger.info('Inside planner_2!!!')
 
     storage_client = StorageClient(body.get('endpoint'), body.get('port'), body.get('access_key'),
                                    body.get('secret_key'), body.get('secure'), body.get('region'))
-    n_outputs = body.get('n_outputs')
 
     payload_dict = {**storage_client.__dict__, **output_object.__dict__,
                     'n_outputs': n_outputs, 'n_estimators': n_estimators}
@@ -151,8 +152,8 @@ async def handler(ctx, data=None, loop=None):
             loop = asyncio.get_event_loop()
             logger.info('Created new loop in handler!!!')
 
-        output_object, n_estimators = await asyncio.ensure_future(planner_1(body, logger), loop=loop)
-        output_object = await asyncio.ensure_future(planner_2(body, output_object, n_estimators, logger), loop=loop)
+        output_object, n_estimators, n_outputs = await asyncio.ensure_future(planner_1(body, logger), loop=loop)
+        output_object = await asyncio.ensure_future(planner_2(body, output_object, n_estimators, n_outputs, logger), loop=loop)
         logger.info('Loop completed in handler!!!')
 
     return json.dumps(output_object.__dict__)

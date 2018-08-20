@@ -150,8 +150,7 @@ public class PredictFlow {
             PredictResponse predictResponse = new PredictResponse();
             predictResponse.setPredictSucess(true);
             predictResponse.setOutputBucketName(predictParams.getOutputBucketName());
-            predictResponse.setOutputObjectPrefixName(predictParams.getOutputObjectPrefixName() + '/' + nodeNumber);
-            predictResponse.setOutputObjectName("final_predictions.csv");
+            predictResponse.setOutputObjectPrefixName(predictParams.getOutputObjectPrefixName());
             predictResponse.setOutputFileDelimiter(predictParams.getOutputFileDelimiter());
             predictResponse.setnOutputs(n_outputs);
             predictResponse.setnEstimators(n_estimators);

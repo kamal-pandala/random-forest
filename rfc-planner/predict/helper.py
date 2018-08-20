@@ -131,7 +131,7 @@ class EstimatorClient:
         output_object.set_output_object_name(body.get('output_object_name'))
         output_object.set_output_file_delimiter(body.get('output_file_delimiter'))
 
-        output_attributes = {'n_estimators': body.get('n_estimators')}
+        output_attributes = {'n_estimators': body.get('n_estimators'), 'n_outputs': body.get('n_outputs')}
         output_object.set_output_attributes(output_attributes)
 
         return output_object

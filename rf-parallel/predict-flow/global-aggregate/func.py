@@ -13,8 +13,7 @@ def handler(ctx, data=None, loop=None):
         logger = get_logger(ctx)
         body = json.loads(data)
 
-        node_number = body.get('node_number')
-        logger.info('Aggregate function on node {0} has started running!'.format(node_number))
+        logger.info('Global aggregate function has started running!')
 
         # TODO - validation and exception handling
         # Parameters required for initialising minio client
