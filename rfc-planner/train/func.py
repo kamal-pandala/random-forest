@@ -98,6 +98,10 @@ async def handler(ctx, data=None, loop=None):
         model_object = await asyncio.ensure_future(planner(body, logger), loop=loop)
         logger.info('Loop completed in handler!!!')
 
+        aggregate_models = body.get('aggregate_models')
+        if aggregate_models:
+            pass
+
     return json.dumps(model_object.__dict__)
 
 
